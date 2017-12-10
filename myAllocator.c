@@ -287,6 +287,7 @@ void *resizeRegion(void *r, size_t newSize) {
       freeRegion(o);		/* free old region */
 
       return (void *)n;
+    }
   }
 }
 
