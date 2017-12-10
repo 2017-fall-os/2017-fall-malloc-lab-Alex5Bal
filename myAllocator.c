@@ -253,20 +253,40 @@ void freeRegion(void *r) {
 */
 void *resizeRegion(void *r, size_t newSize) {
   int oldSize;
+  
   if (r != (void *)0)		/* old region existed */
     oldSize = computeUsableSpace(regionToPrefix(r));
   else
     oldSize = 0;		/* non-existant regions have size 0 */
   if (oldSize >= newSize)	/* old region is big enough */
     return r;
-  else {			/* allocate new region & copy old data */
-    char *o = (char *)r;	/* treat both regions as char* */
-    char *n = (char *)firstFitAllocRegion(newSize); 
-    int i;
-    for (i = 0; i < oldSize; i++) /* copy byte-by-byte, should use memcpy */
-      n[i] = o[i];
-    freeRegion(o);		/* free old region */
-    return (void *)n;
+  else {                        
+    /*Get successor's prefix  */
+    BlockPrefix_t *successorPrefix = getNextPrefix(regionToPrefix(r));
+    /*Calculate combined free space  */
+    int mergeSize = oldSize + computeUsableSpace(successorPrefix) + prefixSize     + suffixSize;
+
+    /*Successor block is free & the combined space is large enough  */
+    if((!successorPrefix->allocated) && (mergeSize >= newSize)) {
+      BlockPrefix_t *p = regionToPrefix(r);  /*Original block's prefix */
+
+      /*Successor's suffix is now original's suffix */
+      p->suffix = successorPrefix->suffix;
+      /*Successor block is consumed by the original block  */
+      successorPrefix->suffix->prefix = p;
+
+      p->allocated = 1;  /*Mark block as taken */
+    }
+    else {                      /*allocate new region & copy old data */
+      char *o = (char *)r;	/* treat both regions as char* */
+      char *n = (char *)firstFitAllocRegion(newSize); 
+      int i;
+
+      for (i = 0; i < oldSize; i++) /* copy byte-by-byte, should use memcpy */
+	n[i] = o[i];
+      freeRegion(o);		/* free old region */
+
+      return (void *)n;
   }
 }
 
