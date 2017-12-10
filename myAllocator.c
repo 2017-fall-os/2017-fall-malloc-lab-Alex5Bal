@@ -76,6 +76,7 @@ void initializeArena() {
 	return; 
     arenaBegin = makeFreeBlock(sbrk(DEFAULT_BRKSIZE), DEFAULT_BRKSIZE);
     arenaEnd = ((void *)arenaBegin) + DEFAULT_BRKSIZE;
+    allocationPointer = arenaBegin;
 }
 
 size_t computeUsableSpace(BlockPrefix_t *p) { /* useful space within a block */
